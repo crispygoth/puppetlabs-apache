@@ -45,14 +45,16 @@ describe 'apache::mod::itk', :type => :class do
       end
     end
 
-    context "with Apache version >= 2.4" do
+    context "with Apache version >= 2.4 on Debian 8" do
       let :pre_condition do
         'class { "apache": mpm_module => prefork, }'
       end
 
       let :params do
         {
-          :apache_version => '2.4',
+          :apache_version         => '2.4',
+          :operatingsystemrelease => '8',
+          :lsbdistcodename        => 'jessie',
         }
       end
 
@@ -67,6 +69,27 @@ describe 'apache::mod::itk', :type => :class do
         it { is_expected.not_to contain_file('/etc/apache2/mods-available/itk.conf').with_content(
                 /EnableCapabilities/) }
       end
+    end
+
+    context "with Apache version >= 2.4 on Debian 9" do
+      let :pre_condition do
+        'class { "apache": mpm_module => prefork, }'
+      end
+
+      let :params do
+        {
+          :apache_version         => '2.4',
+          :operatingsystemrelease => '9',
+          :lsbdistcodename        => 'stretch',
+        }
+      end
+
+      it { is_expected.to contain_file("/etc/apache2/mods-available/mpm_itk.load").with({
+        'ensure'  => 'file',
+        'content' => "LoadModule mpm_itk_module /usr/lib/apache2/modules/mod_mpm_itk.so\n"
+        })
+      }
+      it { is_expected.to contain_file("/etc/apache2/mods-enabled/mpm_itk.load").with_ensure('link') }
     end
   end
   context "on a RedHat OS" do

@@ -36,10 +36,12 @@ describe 'apache::mod::prefork', :type => :class do
       it { is_expected.to contain_package("apache2-mpm-prefork") }
     end
 
-    context "with Apache version >= 2.4" do
+    context "with Apache version >= 2.4 on Debian 8" do
       let :params do
         {
-          :apache_version => '2.4',
+          :apache_version         => '2.4',
+          :operatingsystemrelease => '8',
+          :lsbdistcodename        => 'jessie',
         }
       end
 
@@ -49,6 +51,23 @@ describe 'apache::mod::prefork', :type => :class do
         })
       }
       it { is_expected.to contain_file("/etc/apache2/mods-enabled/prefork.load").with_ensure('link') }
+    end
+
+    context "with Apache version >= 2.4 on Debian 9" do
+      let :params do
+        {
+          :apache_version         => '2.4',
+          :operatingsystemrelease => '9',
+          :lsbdistcodename        => 'stretch',
+        }
+      end
+
+      it { is_expected.to contain_file("/etc/apache2/mods-available/mpm_prefork.load").with({
+        'ensure'  => 'file',
+        'content' => "LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so\n"
+        })
+      }
+      it { is_expected.to contain_file("/etc/apache2/mods-enabled/mpm_prefork.load").with_ensure('link') }
     end
   end
   context "on a RedHat OS" do
