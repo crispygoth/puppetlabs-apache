@@ -1,7 +1,7 @@
 # Security
 ServerTokens <%= @server_tokens %>
-ServerSignature <%= scope.function_bool2httpd([@server_signature]) %>
-TraceEnable <%= scope.function_bool2httpd([@trace_enable]) %>
+ServerSignature <%= scope.call_function('apache::bool2httpd', [@server_signature]) %>
+TraceEnable <%= scope.call_function('apache::bool2httpd', [@trace_enable]) %>
 
 ServerName "<%= @servername %>"
 ServerRoot "<%= @server_root %>"
@@ -11,6 +11,7 @@ KeepAlive <%= @keepalive %>
 MaxKeepAliveRequests <%= @max_keepalive_requests %>
 KeepAliveTimeout <%= @keepalive_timeout %>
 LimitRequestFieldSize <%= @limitreqfieldsize %>
+LimitRequestFields <%= @limitreqfields %>
 <%# Actually >= 2.4.24, but the minor version is not provided -%>
 <%- if @http_protocol_options and scope.function_versioncmp([@apache_version, '2.4']) >= 0 -%>
 HttpProtocolOptions <%= @http_protocol_options %>

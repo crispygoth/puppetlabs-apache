@@ -67,6 +67,7 @@ class apache (
   $keepalive_timeout                                             = $::apache::params::keepalive_timeout,
   $max_keepalive_requests                                        = $::apache::params::max_keepalive_requests,
   $limitreqfieldsize                                             = '8190',
+  $limitreqfields                                                = '100',
   $logroot                                                       = $::apache::params::logroot,
   $logroot_mode                                                  = $::apache::params::logroot_mode,
   $log_level                                                     = $::apache::params::log_level,
@@ -149,7 +150,7 @@ class apache (
     }
   }
 
-  validate_apache_log_level($log_level)
+  apache::validate_apache_log_level($log_level)
 
   class { '::apache::service':
     service_name    => $service_name,

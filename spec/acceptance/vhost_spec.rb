@@ -125,7 +125,7 @@ describe 'apache::vhost define' do
     end
   end
 
-  unless (fact('operatingsystem') == 'SLES' and fact('operatingsystemmajorrelease') <= '10')
+  unless (fact('operatingsystem') == 'SLES' and fact('operatingsystemmajrelease') <= '10')
     context 'new proxy vhost on port 80' do
       it 'should configure an apache proxy vhost' do
         pp = <<-EOS
@@ -800,7 +800,7 @@ describe 'apache::vhost define' do
     end
   end
 
-  unless (fact('operatingsystem') == 'SLES' and fact('operatingsystemmajorrelease') <= '10')
+  unless (fact('operatingsystem') == 'SLES' and fact('operatingsystemmajrelease') <= '10')
     context 'proxy_pass_match for alternative vhost' do
       it 'should configure a local vhost and a proxy vhost' do
         apply_manifest(%{
@@ -1711,6 +1711,26 @@ describe 'apache::vhost define' do
     describe file("#{$vhost_dir}/25-test2.server.conf") do
       it { is_expected.to be_file }
       it { is_expected.to contain 'SSLProtocol  *All -SSLv2' }
+    end
+  end
+
+  describe 'shibboleth parameters', :if => (fact('osfamily') == 'Debian' and fact('operatingsystemmajrelease') != '7') do
+    # Debian 7 is too old for ShibCompatValidUser
+    it 'applies cleanly' do
+      pp = <<-EOS
+        class { 'apache': }
+        class { 'apache::mod::shib': }
+        apache::vhost { 'test.server':
+          port    => '80',
+          docroot => '/var/www/html',
+          shib_compat_valid_user => 'On'
+        }
+      EOS
+      apply_manifest(pp, :catch_failures => true)
+    end
+    describe file("#{$vhost_dir}/25-test.server.conf") do
+      it { is_expected.to be_file }
+      it { is_expected.to contain 'ShibCompatValidUser On' }
     end
   end
 end

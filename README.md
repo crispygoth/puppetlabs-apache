@@ -146,6 +146,7 @@
 [`keepalive` parameter]: #keepalive
 [`keepalive_timeout`]: #keepalive_timeout
 [`limitreqfieldsize`]: https://httpd.apache.org/docs/current/mod/core.html#limitrequestfieldsize
+[`limitreqfields`]: http://httpd.apache.org/docs/current/mod/core.html#limitrequestfields
 
 [`lib`]: #lib
 [`lib_path`]: #lib_path
@@ -1516,6 +1517,12 @@ Default: Depends on operating system:
 - **Red Hat**: 'access_log'
 - **Suse**: 'access.log'
 
+##### `limitreqfields`
+
+The [`limitreqfields`][] parameter sets the maximum number of request header fields in an HTTP request. This directive gives the server administrator greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks. The value should be increased if normal clients see an error response from the server that indicates too many fields were sent in the request.
+
+Default: '100'
+
 #### Class: `apache::dev`
 
 Installs Apache development libraries.
@@ -2799,6 +2806,24 @@ Installs [`mod_status`][] and uses the `status.conf.erb` template to generate it
 * `allow_from`: An [array][] of IPv4 or IPv6 addresses that can access `/server-status`.
 
   Default: ['127.0.0.1','::1'].
+
+* `requires`: A string, an [array][] or a [hash][], of IPs and/or names that can/can't access `/server-status`, using Apache v. >= 2.4 `mod_authz_host` directives (`require ip`, `require host`, etc.). This parameter should follow one of the structures below:
+
+  > Only used if Apache version >= 2.4
+
+  - `undef` - Uses `allow_from` and old directive syntax (`Allow from <List of IPs and/or names>`). Issues deprecation warning.
+  - String
+    - `''` or `'unmanaged'` - No auth directives (access controlled elsewhere)
+    - `'ip <List of IPs>'` - IPs/ranges allowed to access `/server-status`
+    - `'host <List of names>'` - Names/domains allowed to access `/server-status`
+    - `'all [granted|denied]'` - Allow / block everyone
+  - Array - Each item should be a string from those described above. Results in one directive per array item.
+  - Hash with structure below (shown as key => value, where keys are strings):
+    - `'requires'` => Array as above - Same effect as the array
+    - `'enforce'`  => String `'Any'`, `'All'` or `'None'` (optional) - Encloses all directives from `'requires'` key in a `<Require(Any|All|None)>` block
+
+  Default: 'ip 127.0.0.1 ::1'
+
 * `extended_status`: Determines whether to track extended status information for each request, via the [`ExtendedStatus`][] directive.
 
   Values: 'Off', 'On'.
@@ -5079,6 +5104,10 @@ apache::vhost { 'secure.example.net':
 ##### `shib_use_headers`
 
 When set to 'On', this turns on the use of request headers to publish attributes to applications. Values for this key is 'On' or 'Off', and the default value is 'Off'. This key is disabled if `apache::mod::shib` is not defined. Check the [`mod_shib` documentation](https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApacheConfig#NativeSPApacheConfig-Server/VirtualHostOptions) for more details.
+
+##### `shib_compat_valid_user`
+
+Default is Off, matching the behavior prior to this command's existence. Addresses a conflict when using Shibboleth in conjunction with other auth/auth modules by restoring "standard" Apache behavior when processing the "valid-user" and "user" Require rules. See the [`mod_shib`documentation](https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApacheConfig#NativeSPApacheConfig-Server/VirtualHostOptions), and [NativeSPhtaccess](https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPhtaccess) topic for more details. This key is disabled if `apache::mod::shib` is not defined.
 
 ##### `ssl_options`
 
