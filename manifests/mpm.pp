@@ -46,18 +46,24 @@ define apache::mpm (
 
   case $::osfamily {
     'debian': {
-      file { "${::apache::mod_enable_dir}/${mpm}.conf":
+      if $::operatingsystem == 'Debian' and versioncmp($::operatingsystemrelease, '9') >= 0 {
+        $conf_prefix = 'mpm_'
+      } else {
+        $conf_prefix = ''
+      }
+
+      file { "${::apache::mod_enable_dir}/${conf_prefix}${mpm}.conf":
         ensure  => link,
-        target  => "${::apache::mod_dir}/${mpm}.conf",
+        target  => "${::apache::mod_dir}/${conf_prefix}${mpm}.conf",
         require => Exec["mkdir ${::apache::mod_enable_dir}"],
         before  => File[$::apache::mod_enable_dir],
         notify  => Class['apache::service'],
       }
 
       if versioncmp($apache_version, '2.4') >= 0 {
-        file { "${::apache::mod_enable_dir}/${mpm}.load":
+        file { "${::apache::mod_enable_dir}/${conf_prefix}${mpm}.load":
           ensure  => link,
-          target  => "${::apache::mod_dir}/${mpm}.load",
+          target  => "${::apache::mod_dir}/${conf_prefix}${mpm}.load",
           require => Exec["mkdir ${::apache::mod_enable_dir}"],
           before  => File[$::apache::mod_enable_dir],
           notify  => Class['apache::service'],
