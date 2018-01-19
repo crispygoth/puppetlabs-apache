@@ -24,6 +24,8 @@ class apache::mod::security (
   $secrequestbodylimit         = '13107200',
   $secrequestbodynofileslimit  = '131072',
   $secrequestbodyinmemorylimit = '131072',
+  $security_conf_template      = 'apache/mod/security.conf.erb',
+  $manage_etc_modsecurity      = true,
   $manage_security_crs         = true,
 ) inherits ::apache::params {
   include ::apache
@@ -73,7 +75,7 @@ class apache::mod::security (
   # - secrequestbodyinmemorylimit
   file { 'security.conf':
     ensure  => file,
-    content => template('apache/mod/security.conf.erb'),
+    content => template($security_conf_template),
     mode    => $::apache::file_mode,
     path    => "${::apache::mod_dir}/security.conf",
     owner   => $::apache::params::user,
@@ -83,51 +85,52 @@ class apache::mod::security (
     notify  => Class['apache::service'],
   }
 
-  file { $modsec_dir:
-    ensure  => directory,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-    purge   => true,
-    force   => true,
-    recurse => true,
-    require => Package['httpd'],
-  }
+  if $manage_etc_modsecurity {
+    file { $modsec_dir:
+      ensure  => directory,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755',
+      purge   => true,
+      force   => true,
+      recurse => true,
+      require => Package['httpd'],
+    }
 
-  file { "${modsec_dir}/activated_rules":
-    ensure  => directory,
-    owner   => $::apache::params::user,
-    group   => $::apache::params::group,
-    mode    => '0555',
-    purge   => true,
-    force   => true,
-    recurse => true,
-    notify  => Class['apache::service'],
-  }
-
-  if $manage_security_crs {
-    # Template uses:
-    # - $_secdefaultaction
-    # - $critical_anomaly_score
-    # - $error_anomaly_score
-    # - $warning_anomaly_score
-    # - $notice_anomaly_score
-    # - $inbound_anomaly_threshold
-    # - $outbound_anomaly_threshold
-    # - $anomaly_score_blocking
-    # - $allowed_methods
-    # - $content_types
-    # - $restricted_extensions
-    # - $restricted_headers
-    # - $secrequestmaxnumargs
-    file { "${modsec_dir}/security_crs.conf":
-      ensure  => file,
-      content => template('apache/mod/security_crs.conf.erb'),
-      require => File[$modsec_dir],
+    file { "${modsec_dir}/activated_rules":
+      ensure  => directory,
+      owner   => $::apache::params::user,
+      group   => $::apache::params::group,
+      mode    => '0555',
+      purge   => true,
+      force   => true,
+      recurse => true,
       notify  => Class['apache::service'],
     }
+
+    if $manage_security_crs {
+      # Template uses:
+      # - $_secdefaultaction
+      # - $critical_anomaly_score
+      # - $error_anomaly_score
+      # - $warning_anomaly_score
+      # - $notice_anomaly_score
+      # - $inbound_anomaly_threshold
+      # - $outbound_anomaly_threshold
+      # - $anomaly_score_blocking
+      # - $allowed_methods
+      # - $content_types
+      # - $restricted_extensions
+      # - $restricted_headers
+      # - $secrequestmaxnumargs
+      file { "${modsec_dir}/security_crs.conf":
+        ensure  => file,
+        content => template('apache/mod/security_crs.conf.erb'),
+        require => File[$modsec_dir],
+        notify  => Class['apache::service'],
+      }
+    }
+
+    unless $::operatingsystem == 'SLES' { apache::security::rule_link { $activated_rules: } }
   }
-
-  unless $::operatingsystem == 'SLES' { apache::security::rule_link { $activated_rules: } }
-
 }
