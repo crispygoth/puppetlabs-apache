@@ -184,5 +184,15 @@ describe 'apache::mod::security', type: :class do
         )
       }
     end
+    describe 'with /etc/modsecurity management disabled' do
+      let :params do
+        {
+			:manage_etc_modsecurity => false,
+        }
+      end
+      it { should contain_file('security.conf').with_content %r{^\s+SecAuditLogRelevantStatus "\^\(\?:5\|4\(\?!01\|04\)\)"$} }
+      it { should contain_file('security.conf').with_content %r{^\s+SecAuditLogParts ABCDZ$} }
+      it { should_not contain_file('/etc/modsecurity') }
+    end
   end
 end
