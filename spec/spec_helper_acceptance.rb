@@ -1,3 +1,5 @@
+require 'beaker-pe'
+require 'beaker-puppet'
 require 'puppet'
 require 'beaker-rspec/spec_helper'
 require 'beaker-rspec/helpers/serverspec'
@@ -6,6 +8,7 @@ require 'beaker/module_install_helper'
 require 'beaker-task_helper'
 
 run_puppet_install_helper
+configure_type_defaults_on(hosts)
 install_bolt_on(hosts) unless pe_install?
 install_module_on(hosts)
 install_module_dependencies_on(hosts)
@@ -29,7 +32,7 @@ RSpec.configure do |c|
 
   # Configure all nodes in nodeset
   c.before :suite do
-    run_puppet_access_login(user: 'admin') if pe_install? && puppet_version =~ %r{(5\.\d\.\d)}
+    run_puppet_access_login(user: 'admin') if pe_install? && (Gem::Version.new(puppet_version) >= Gem::Version.new('5.0.0'))
     # net-tools required for netstat utility being used by be_listening
     if fact('osfamily') == 'RedHat' && fact('operatingsystemmajrelease') == '7'
       pp = <<-EOS
